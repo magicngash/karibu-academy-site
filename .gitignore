@@ -50,5 +50,15 @@ test
 prompt
 
 server.log
+# database
+/db/
+*.db
+*.db-journal
+
+# preview screenshots
+preview-*.png
+
+# netlify
+.netlify/
 # Skills directory
 /skills/

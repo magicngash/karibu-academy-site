@@ -8,13 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Phone,
   Mail,
   MapPin,
@@ -69,7 +62,7 @@ const industries = [
   'Other',
 ];
 
-const packages = [
+const programs = [
   'Customer Service Excellence',
   'Leadership & Management',
   'Workplace Communication',
@@ -79,6 +72,14 @@ const packages = [
   'Custom Corporate Training',
   'Not sure yet',
 ];
+
+const contactMethods = ['Email', 'Phone Call', 'WhatsApp'];
+
+function encodeFormData(data: Record<string, string>) {
+  return Object.keys(data)
+    .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
 
 export default function Contact() {
   const ref = useRef(null);
@@ -93,7 +94,7 @@ export default function Contact() {
     phone: '',
     company: '',
     industry: '',
-    packageOfInterest: '',
+    programOfInterest: '',
     numberOfStaff: '',
     preferredContactMethod: '',
     additionalInformation: '',
@@ -115,16 +116,19 @@ export default function Contact() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/enquiry', {
+      await fetch('/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, type: 'general' }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: encodeFormData({
+          'form-name': 'contact',
+          'bot-field': '',
+          ...form,
+        }),
       });
-      if (!res.ok) throw new Error('Submission failed');
       setSuccess(true);
       toast({
         title: 'Enquiry Submitted!',
-        description: 'We\'ll get back to you within 24 hours.',
+        description: "We'll get back to you within 24 hours.",
       });
     } catch {
       toast({
@@ -136,6 +140,9 @@ export default function Contact() {
       setLoading(false);
     }
   };
+
+  const selectClass =
+    'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
     <section id="contact" className="py-20 sm:py-28 bg-white" ref={ref}>
@@ -153,8 +160,7 @@ export default function Contact() {
             </span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-            Ready to{' '}
-            <span className="text-gradient">Get Started?</span>
+            Ready to <span className="text-gradient">Get Started?</span>
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
             Fill in the form below and our team will reach out within 24 hours
@@ -185,8 +191,8 @@ export default function Contact() {
               </div>
             ))}
 
-            {/* WhatsApp & Social */}
-            <div className="pt-4 space-y-3">
+            {/* WhatsApp */}
+            <div className="pt-4">
               <Button
                 className="w-full bg-green-600 text-white hover:bg-green-700 font-semibold gap-2"
                 onClick={() => window.open('https://wa.me/254700123456', '_blank')}
@@ -234,9 +240,7 @@ export default function Contact() {
                   <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
                     <CheckCircle2 className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold text-foreground mb-3">
-                    Thank You!
-                  </h3>
+                  <h3 className="text-2xl font-bold text-foreground mb-3">Thank You!</h3>
                   <p className="text-muted-foreground mb-6">
                     Your enquiry has been submitted successfully. Our team will
                     contact you within 24 hours with a personalized response.
@@ -244,17 +248,7 @@ export default function Contact() {
                   <Button
                     onClick={() => {
                       setSuccess(false);
-                      setForm({
-                        name: '',
-                        email: '',
-                        phone: '',
-                        company: '',
-                        industry: '',
-                        packageOfInterest: '',
-                        numberOfStaff: '',
-                        preferredContactMethod: '',
-                        additionalInformation: '',
-                      });
+                      setForm({ name: '', email: '', phone: '', company: '', industry: '', programOfInterest: '', numberOfStaff: '', preferredContactMethod: '', additionalInformation: '' });
                     }}
                     variant="outline"
                     className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -266,147 +260,91 @@ export default function Contact() {
             ) : (
               <Card className="border border-border/50 shadow-lg">
                 <CardContent className="p-6 sm:p-8">
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form
+                    name="contact"
+                    method="POST"
+                    data-netlify="true"
+                    netlify-honeypot="bot-field"
+                    onSubmit={handleSubmit}
+                    className="space-y-5"
+                  >
+                    {/* Netlify required hidden fields */}
+                    <input type="hidden" name="form-name" value="contact" />
+                    <p className="hidden">
+                      <label>
+                        Don&apos;t fill this out: <input name="bot-field" tabIndex={-1} autoComplete="off" />
+                      </label>
+                    </p>
+
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          placeholder="John Doe"
-                          value={form.name}
-                          onChange={(e) => updateField('name', e.target.value)}
-                          required
-                        />
+                        <Label htmlFor="c-name">Full Name *</Label>
+                        <Input id="c-name" name="name" placeholder="John Doe" value={form.name} onChange={(e) => updateField('name', e.target.value)} required />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="john@company.com"
-                          value={form.email}
-                          onChange={(e) => updateField('email', e.target.value)}
-                          required
-                        />
+                        <Label htmlFor="c-email">Email Address *</Label>
+                        <Input id="c-email" name="email" type="email" placeholder="john@company.com" value={form.email} onChange={(e) => updateField('email', e.target.value)} required />
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          placeholder="+254 700 123 456"
-                          value={form.phone}
-                          onChange={(e) => updateField('phone', e.target.value)}
-                        />
+                        <Label htmlFor="c-phone">Phone Number</Label>
+                        <Input id="c-phone" name="phone" placeholder="+254 700 123 456" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="company">Company / Organization</Label>
-                        <Input
-                          id="company"
-                          placeholder="Acme Ltd"
-                          value={form.company}
-                          onChange={(e) => updateField('company', e.target.value)}
-                        />
+                        <Label htmlFor="c-company">Company / Organization</Label>
+                        <Input id="c-company" name="company" placeholder="Acme Ltd" value={form.company} onChange={(e) => updateField('company', e.target.value)} />
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Industry</Label>
-                        <Select
-                          value={form.industry}
-                          onValueChange={(v) => updateField('industry', v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {industries.map((ind) => (
-                              <SelectItem key={ind} value={ind}>
-                                {ind}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="c-industry">Industry</Label>
+                        <select id="c-industry" name="industry" value={form.industry} onChange={(e) => updateField('industry', e.target.value)} className={selectClass}>
+                          <option value="">Select industry</option>
+                          {industries.map((ind) => (
+                            <option key={ind} value={ind}>{ind}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Program of Interest</Label>
-                        <Select
-                          value={form.packageOfInterest}
-                          onValueChange={(v) => updateField('packageOfInterest', v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select program" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {packages.map((p) => (
-                              <SelectItem key={p} value={p}>
-                                {p}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="c-program">Program of Interest</Label>
+                        <select id="c-program" name="programOfInterest" value={form.programOfInterest} onChange={(e) => updateField('programOfInterest', e.target.value)} className={selectClass}>
+                          <option value="">Select program</option>
+                          {programs.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="staff">Number of Staff</Label>
-                        <Input
-                          id="staff"
-                          placeholder="e.g., 10-50"
-                          value={form.numberOfStaff}
-                          onChange={(e) => updateField('numberOfStaff', e.target.value)}
-                        />
+                        <Label htmlFor="c-staff">Number of Staff</Label>
+                        <Input id="c-staff" name="numberOfStaff" placeholder="e.g., 10-50" value={form.numberOfStaff} onChange={(e) => updateField('numberOfStaff', e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Preferred Contact Method</Label>
-                        <Select
-                          value={form.preferredContactMethod}
-                          onValueChange={(v) => updateField('preferredContactMethod', v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select method" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="email">Email</SelectItem>
-                            <SelectItem value="phone">Phone Call</SelectItem>
-                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="c-contact">Preferred Contact Method</Label>
+                        <select id="c-contact" name="preferredContactMethod" value={form.preferredContactMethod} onChange={(e) => updateField('preferredContactMethod', e.target.value)} className={selectClass}>
+                          <option value="">Select method</option>
+                          {contactMethods.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="message">Additional Information</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="Tell us more about your training needs..."
-                        rows={4}
-                        value={form.additionalInformation}
-                        onChange={(e) => updateField('additionalInformation', e.target.value)}
-                        className="resize-none"
-                      />
+                      <Label htmlFor="c-message">Additional Information</Label>
+                      <Textarea id="c-message" name="additionalInformation" placeholder="Tell us more about your training needs..." rows={4} value={form.additionalInformation} onChange={(e) => updateField('additionalInformation', e.target.value)} className="resize-none" />
                     </div>
 
-                    <Button
-                      type="submit"
-                      size="lg"
-                      disabled={loading}
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-lg shadow-primary/20"
-                    >
+                    <Button type="submit" size="lg" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-lg shadow-primary/20">
                       {loading ? (
-                        <>
-                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                          Submitting...
-                        </>
+                        <><Loader2 className="mr-2 w-4 h-4 animate-spin" /> Submitting...</>
                       ) : (
-                        <>
-                          <Send className="mr-2 w-4 h-4" />
-                          Submit Enquiry
-                        </>
+                        <><Send className="mr-2 w-4 h-4" /> Submit Enquiry</>
                       )}
                     </Button>
                   </form>

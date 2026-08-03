@@ -9,13 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   ArrowRight,
   CheckCircle2,
   Star,
@@ -24,6 +17,7 @@ import {
   Sparkles,
   Send,
   CalendarCheck,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -75,11 +69,24 @@ const packages = [
   },
 ];
 
+const industryOptions = ['Restaurant', 'Hotel', 'Retail', 'Healthcare', 'Banking', 'NGO', 'Government', 'SME', 'Corporate', 'Other'];
+const staffOptions = ['1-10', '11-50', '51-100', '101-500', '500+'];
+const packageOptions = ['Starter', 'Professional', 'Enterprise', 'Custom / Not Sure'];
+const contactMethods = ['Email', 'Phone Call', 'WhatsApp'];
+
+function encodeFormData(data: Record<string, string>) {
+  return Object.keys(data)
+    .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
+
+const selectClass =
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+
 export default function TrainingPackages() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
   const [showForm, setShowForm] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -95,9 +102,8 @@ export default function TrainingPackages() {
   const { toast } = useToast();
 
   const handlePackageClick = (pkgName: string) => {
-    setSelectedPackage(pkgName);
-    setShowForm(true);
     setFormData((prev) => ({ ...prev, packageOfInterest: pkgName }));
+    setShowForm(true);
     setTimeout(() => {
       document.getElementById('enquiry-form-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -111,18 +117,18 @@ export default function TrainingPackages() {
     }
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/enquiry', {
+      await fetch('/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, type: 'package-enquiry' }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: encodeFormData({
+          'form-name': 'package-enquiry',
+          'bot-field': '',
+          ...formData,
+        }),
       });
-      if (res.ok) {
-        toast({ title: 'Enquiry submitted successfully! Our team will contact you shortly.' });
-        setFormData({ name: '', company: '', industry: '', phone: '', email: '', numberOfStaff: '', packageOfInterest: '', preferredContactMethod: '', additionalInformation: '' });
-        setShowForm(false);
-      } else {
-        toast({ title: 'Something went wrong. Please try again.', variant: 'destructive' });
-      }
+      toast({ title: 'Enquiry submitted successfully! Our team will contact you shortly.' });
+      setFormData({ name: '', company: '', industry: '', phone: '', email: '', numberOfStaff: '', packageOfInterest: '', preferredContactMethod: '', additionalInformation: '' });
+      setShowForm(false);
     } catch {
       toast({ title: 'Network error. Please check your connection and try again.', variant: 'destructive' });
     } finally {
@@ -234,9 +240,7 @@ export default function TrainingPackages() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => {
-                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  onClick={() => { document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
                   className="font-semibold"
                 >
                   Book a Consultation
@@ -254,130 +258,75 @@ export default function TrainingPackages() {
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ duration: 0.4 }}
           >
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border/50 p-8 sm:p-10 max-w-3xl mx-auto">
+            <form
+              name="package-enquiry"
+              method="POST"
+              data-netlify="true"
+              netlify-honeypot="bot-field"
+              onSubmit={handleSubmit}
+              className="bg-white rounded-2xl border border-border/50 p-8 sm:p-10 max-w-3xl mx-auto"
+            >
+              <input type="hidden" name="form-name" value="package-enquiry" />
+              <p className="hidden">
+                <label>Don&apos;t fill this out: <input name="bot-field" tabIndex={-1} autoComplete="off" /></label>
+              </p>
+
               <h3 className="text-2xl font-bold text-foreground mb-6">Package Enquiry Form</h3>
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-name">Full Name *</Label>
-                  <Input
-                    id="pkg-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="John Doe"
-                    required
-                  />
+                  <Label htmlFor="p-name">Full Name *</Label>
+                  <Input id="p-name" name="name" value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} placeholder="John Doe" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-email">Email Address *</Label>
-                  <Input
-                    id="pkg-email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                    placeholder="john@company.com"
-                    required
-                  />
+                  <Label htmlFor="p-email">Email Address *</Label>
+                  <Input id="p-email" name="email" type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} placeholder="john@company.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-company">Company Name</Label>
-                  <Input
-                    id="pkg-company"
-                    value={formData.company}
-                    onChange={(e) => setFormData((p) => ({ ...p, company: e.target.value }))}
-                    placeholder="Your Company"
-                  />
+                  <Label htmlFor="p-company">Company Name</Label>
+                  <Input id="p-company" name="company" value={formData.company} onChange={(e) => setFormData((p) => ({ ...p, company: e.target.value }))} placeholder="Your Company" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-industry">Industry</Label>
-                  <Select value={formData.industry} onValueChange={(v) => setFormData((p) => ({ ...p, industry: v }))}>
-                    <SelectTrigger id="pkg-industry"><SelectValue placeholder="Select industry" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="restaurant">Restaurant</SelectItem>
-                      <SelectItem value="hotel">Hotel</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="banking">Banking</SelectItem>
-                      <SelectItem value="ngo">NGO</SelectItem>
-                      <SelectItem value="government">Government</SelectItem>
-                      <SelectItem value="sme">SME</SelectItem>
-                      <SelectItem value="corporate">Corporate</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="p-industry">Industry</Label>
+                  <select id="p-industry" name="industry" value={formData.industry} onChange={(e) => setFormData((p) => ({ ...p, industry: e.target.value }))} className={selectClass}>
+                    <option value="">Select industry</option>
+                    {industryOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-phone">Phone Number</Label>
-                  <Input
-                    id="pkg-phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder="+254 700 000 000"
-                  />
+                  <Label htmlFor="p-phone">Phone Number</Label>
+                  <Input id="p-phone" name="phone" type="tel" value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} placeholder="+254 700 000 000" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pkg-staff">Number of Staff</Label>
-                  <Select value={formData.numberOfStaff} onValueChange={(v) => setFormData((p) => ({ ...p, numberOfStaff: v }))}>
-                    <SelectTrigger id="pkg-staff"><SelectValue placeholder="Select range" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-10">1 - 10</SelectItem>
-                      <SelectItem value="11-50">11 - 50</SelectItem>
-                      <SelectItem value="51-100">51 - 100</SelectItem>
-                      <SelectItem value="101-500">101 - 500</SelectItem>
-                      <SelectItem value="500+">500+</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="p-staff">Number of Staff</Label>
+                  <select id="p-staff" name="numberOfStaff" value={formData.numberOfStaff} onChange={(e) => setFormData((p) => ({ ...p, numberOfStaff: e.target.value }))} className={selectClass}>
+                    <option value="">Select range</option>
+                    {staffOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="pkg-package">Package of Interest</Label>
-                  <Select value={formData.packageOfInterest} onValueChange={(v) => setFormData((p) => ({ ...p, packageOfInterest: v }))}>
-                    <SelectTrigger id="pkg-package"><SelectValue placeholder="Select package" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Starter">Starter</SelectItem>
-                      <SelectItem value="Professional">Professional</SelectItem>
-                      <SelectItem value="Enterprise">Enterprise</SelectItem>
-                      <SelectItem value="Custom">Custom / Not Sure</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="p-package">Package of Interest</Label>
+                  <select id="p-package" name="packageOfInterest" value={formData.packageOfInterest} onChange={(e) => setFormData((p) => ({ ...p, packageOfInterest: e.target.value }))} className={selectClass}>
+                    <option value="">Select package</option>
+                    {packageOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="pkg-contact-method">Preferred Contact Method</Label>
-                  <Select value={formData.preferredContactMethod} onValueChange={(v) => setFormData((p) => ({ ...p, preferredContactMethod: v }))}>
-                    <SelectTrigger id="pkg-contact-method"><SelectValue placeholder="Select method" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="phone">Phone Call</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="p-contact">Preferred Contact Method</Label>
+                  <select id="p-contact" name="preferredContactMethod" value={formData.preferredContactMethod} onChange={(e) => setFormData((p) => ({ ...p, preferredContactMethod: e.target.value }))} className={selectClass}>
+                    <option value="">Select method</option>
+                    {contactMethods.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="pkg-info">Additional Information</Label>
-                  <Textarea
-                    id="pkg-info"
-                    value={formData.additionalInformation}
-                    onChange={(e) => setFormData((p) => ({ ...p, additionalInformation: e.target.value }))}
-                    placeholder="Tell us more about your training needs..."
-                    rows={3}
-                  />
+                  <Label htmlFor="p-info">Additional Information</Label>
+                  <Textarea id="p-info" name="additionalInformation" value={formData.additionalInformation} onChange={(e) => setFormData((p) => ({ ...p, additionalInformation: e.target.value }))} placeholder="Tell us more about your training needs..." rows={3} />
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-lg shadow-primary/20"
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
+                <Button type="submit" size="lg" disabled={isSubmitting} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-lg shadow-primary/20">
+                  {isSubmitting ? <><Loader2 className="mr-2 w-4 h-4 animate-spin" /> Submitting...</> : 'Submit Enquiry'}
                 </Button>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="outline"
-                  onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="font-semibold"
-                >
+                <Button type="button" size="lg" variant="outline" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="font-semibold">
                   Book a Consultation
                 </Button>
               </div>
